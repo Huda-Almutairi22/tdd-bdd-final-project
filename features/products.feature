@@ -1,40 +1,53 @@
-Feature: The product store service back-end
-    As a Product Store Owner
-    I need a RESTful catalog service
-    So that I can keep track of all my products
+#features/products.feature
+$featureContent = @'
+Feature: Product Management
+  As a Store Manager
+  I want to manage products
+  So that I can keep track of my inventory
 
-Background:
+  Background:
     Given the following products
-        | name       | description     | price   | available | category   |
-        | Hat        | A red fedora    | 59.95   | True      | CLOTHS     |
-        | Shoes      | Blue shoes      | 120.50  | False     | CLOTHS     |
-        | Big Mac    | 1/4 lb burger   | 5.99    | True      | FOOD       |
-        | Sheets     | Full bed sheets | 87.00   | True      | HOUSEWARES |
+      | name          | description        | price | category    | available |
+      | Laptop        | High-end laptop   | 999.99| Electronics | true      |
+      | Mouse         | Wireless mouse    | 29.99 | Electronics | true      |
+      | T-Shirt       | Cotton t-shirt    | 19.99 | Clothing    | true      |
+      | Python Book   | Programming book  | 49.99 | Books       | false     |
 
-Scenario: The server is running
-    When I visit the "Home Page"
-    Then I should see "Product Catalog Administration" in the title
-    And I should not see "404 Not Found"
+  Scenario: Create a product
+    When I create a new product with name "Headphones", description "Noise cancelling", price "199.99", category "Electronics", available "true"
+    Then I should see the product "Headphones" in the results
 
-Scenario: Create a Product
-    When I visit the "Home Page"
-    And I set the "Name" to "Hammer"
-    And I set the "Description" to "Claw hammer"
-    And I select "True" in the "Available" dropdown
-    And I select "Tools" in the "Category" dropdown
-    And I set the "Price" to "34.95"
-    And I press the "Create" button
-    Then I should see the message "Success"
-    When I copy the "Id" field
-    And I press the "Clear" button
-    Then the "Id" field should be empty
-    And the "Name" field should be empty
-    And the "Description" field should be empty
-    When I paste the "Id" field
-    And I press the "Retrieve" button
-    Then I should see the message "Success"
-    And I should see "Hammer" in the "Name" field
-    And I should see "Claw hammer" in the "Description" field
-    And I should see "True" in the "Available" dropdown
-    And I should see "Tools" in the "Category" dropdown
-    And I should see "34.95" in the "Price" field
+  Scenario: Read a product
+    When I request product with id "1"
+    Then I should get product "Laptop"
+
+  Scenario: Update a product
+    When I update product "1" with name "Gaming Laptop", description "High performance"
+    Then I should see product "1" with name "Gaming Laptop"
+
+  Scenario: Delete a product
+    When I delete product "2"
+    Then I should not see product "Mouse" in the results
+
+  Scenario: List all products
+    When I list all products
+    Then I should see 4 products
+
+  Scenario: List products by category
+    When I search for products in category "Electronics"
+    Then I should see 2 products
+    And I should see "Laptop" in the results
+    And I should see "Mouse" in the results
+
+  Scenario: List products by availability
+    When I search for available products
+    Then I should see 3 products
+    And I should not see "Python Book" in the results
+
+  Scenario: List products by name
+    When I search for products named "Laptop"
+    Then I should see 1 product
+    And I should see "Laptop" in the results
+'@
+
+$featureContent | Out-File -FilePath features/products.feature -Encoding utf8 -NoNewline

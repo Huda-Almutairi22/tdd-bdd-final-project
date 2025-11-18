@@ -1,3 +1,5 @@
+# محتوى tests/test_models.py مع الإضافات الجديدة
+@'
 # Copyright 2016, 2023 John J. Rofrano. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -101,6 +103,92 @@ class TestProductModel(unittest.TestCase):
         self.assertEqual(new_product.available, product.available)
         self.assertEqual(new_product.category, product.category)
 
-    #
-    # ADD YOUR TEST CASES HERE
-    #
+    ######################################################################
+    #  A D D   Y O U R   T E S T   C A S E S   H E R E
+    ######################################################################
+
+    def test_read_a_product(self):
+        """It should Read a product"""
+        product = ProductFactory()
+        product.create()
+        self.assertIsNotNone(product.id)
+        # Read the product back
+        found_product = Product.find(product.id)
+        self.assertEqual(found_product.id, product.id)
+        self.assertEqual(found_product.name, product.name)
+        self.assertEqual(found_product.description, product.description)
+        self.assertEqual(found_product.price, product.price)
+        self.assertEqual(found_product.category, product.category)
+        self.assertEqual(found_product.available, product.available)
+
+    def test_update_a_product(self):
+        """It should Update a product"""
+        product = ProductFactory()
+        product.create()
+        self.assertIsNotNone(product.id)
+        # Update the product
+        product.name = "Updated Product"
+        product.description = "Updated Description"
+        product.update()
+        # Read it back and verify
+        updated_product = Product.find(product.id)
+        self.assertEqual(updated_product.name, "Updated Product")
+        self.assertEqual(updated_product.description, "Updated Description")
+
+    def test_delete_a_product(self):
+        """It should Delete a product"""
+        product = ProductFactory()
+        product.create()
+        self.assertEqual(len(Product.all()), 1)
+        # Delete the product
+        product.delete()
+        self.assertEqual(len(Product.all()), 0)
+
+    def test_list_all_products(self):
+        """It should List all products"""
+        products = Product.all()
+        self.assertEqual(products, [])
+        # Create several products
+        for _ in range(5):
+            product = ProductFactory()
+            product.create()
+        # Check that we have 5 products
+        products = Product.all()
+        self.assertEqual(len(products), 5)
+
+    def test_find_by_name(self):
+        """It should Find a product by Name"""
+        products = ProductFactory.create_batch(5)
+        for product in products:
+            product.create()
+        name = products[0].name
+        count = len([product for product in products if product.name == name])
+        found = Product.find_by_name(name)
+        self.assertEqual(found.count(), count)
+        for product in found:
+            self.assertEqual(product.name, name)
+
+    def test_find_by_category(self):
+        """It should Find products by Category"""
+        products = ProductFactory.create_batch(10)
+        for product in products:
+            product.create()
+        category = products[0].category
+        count = len([product for product in products if product.category == category])
+        found = Product.find_by_category(category)
+        self.assertEqual(found.count(), count)
+        for product in found:
+            self.assertEqual(product.category, category)
+
+    def test_find_by_availability(self):
+        """It should Find products by Availability"""
+        products = ProductFactory.create_batch(10)
+        for product in products:
+            product.create()
+        available = products[0].available
+        count = len([product for product in products if product.available == available])
+        found = Product.find_by_availability(available)
+        self.assertEqual(found.count(), count)
+        for product in found:
+            self.assertEqual(product.available, available)
+'@ | Set-Content -FilePath tests/test_models.py -Encoding utf8

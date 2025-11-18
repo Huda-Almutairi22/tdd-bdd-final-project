@@ -1,3 +1,5 @@
+#tests/factories.py 
+@'
 # Copyright 2016, 2022 John J. Rofrano. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,23 +14,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# pylint: disable=too-few-public-methods
-
 """
 Test Factory to make fake objects for testing
 """
 import factory
 from factory.fuzzy import FuzzyChoice, FuzzyDecimal
-from service.models import Product, Category
-
+from service.models import Product
 
 class ProductFactory(factory.Factory):
     """Creates fake products for testing"""
 
     class Meta:
-        """Maps factory to data model"""
-
         model = Product
 
     id = factory.Sequence(lambda n: n)
-   ## Add code to create Fake Products 
+    name = factory.Faker('company')
+    description = factory.Faker('text')
+    price = FuzzyDecimal(10.0, 1000.0)
+    category = FuzzyChoice(['Electronics', 'Books', 'Clothing', 'Home', 'Sports'])
+    available = FuzzyChoice([True, False])
+'@ | Set-Content -FilePath tests/factories.py -Encoding utf8

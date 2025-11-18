@@ -1,134 +1,108 @@
-######################################################################
-# Copyright 2016, 2021 John J. Rofrano. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-# https://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-######################################################################
-
-# pylint: disable=function-redefined, missing-function-docstring
-# flake8: noqa
+# محتوى features/steps/web_steps.py
+@'
 """
 Web Steps
 
 Steps file for web interactions with Selenium
-
-For information on Waiting until elements are present in the HTML see:
-    https://selenium-python.readthedocs.io/waits.html
 """
-import logging
-from behave import when, then
+from behave import given, when, then
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import Select, WebDriverWait
-from selenium.webdriver.support import expected_conditions
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+import requests
 
-ID_PREFIX = 'product_'
+# HTTP Return Codes
+HTTP_200_OK = 200
+HTTP_201_CREATED = 201
+HTTP_204_NO_CONTENT = 204
 
+@when('I create a new product with name "{name}", description "{description}", price "{price}", category "{category}", available "{available}"')
+def step_impl(context, name, description, price, category, available):
+    """Create a new product via REST API"""
+    data = {
+        "name": name,
+        "description": description,
+        "price": float(price),
+        "category": category,
+        "available": available.lower() == "true"
+    }
+    context.resp = requests.post(f"{context.base_url}/products", json=data)
+    assert context.resp.status_code == HTTP_201_CREATED
 
-@when('I visit the "Home Page"')
+@when('I request product with id "{product_id}"')
+def step_impl(context, product_id):
+    """Get a product by ID via REST API"""
+    context.resp = requests.get(f"{context.base_url}/products/{product_id}")
+
+@when('I update product "{product_id}" with name "{name}", description "{description}"')
+def step_impl(context, product_id, name, description):
+    """Update a product via REST API"""
+    data = {
+        "name": name,
+        "description": description
+    }
+    context.resp = requests.put(f"{context.base_url}/products/{product_id}", json=data)
+    assert context.resp.status_code == HTTP_200_OK
+
+@when('I delete product "{product_id}"')
+def step_impl(context, product_id):
+    """Delete a product via REST API"""
+    context.resp = requests.delete(f"{context.base_url}/products/{product_id}")
+    assert context.resp.status_code == HTTP_204_NO_CONTENT
+
+@when('I list all products')
 def step_impl(context):
-    """ Make a call to the base URL """
-    context.driver.get(context.base_url)
-    # Uncomment next line to take a screenshot of the web page
-    # context.driver.save_screenshot('home_page.png')
+    """List all products via REST API"""
+    context.resp = requests.get(f"{context.base_url}/products")
+    assert context.resp.status_code == HTTP_200_OK
 
-@then('I should see "{message}" in the title')
-def step_impl(context, message):
-    """ Check the document title for a message """
-    assert(message in context.driver.title)
+@when('I search for products in category "{category}"')
+def step_impl(context, category):
+    """Search products by category via REST API"""
+    context.resp = requests.get(f"{context.base_url}/products", params={"category": category})
+    assert context.resp.status_code == HTTP_200_OK
 
-@then('I should not see "{text_string}"')
-def step_impl(context, text_string):
-    element = context.driver.find_element(By.TAG_NAME, 'body')
-    assert(text_string not in element.text)
+@when('I search for available products')
+def step_impl(context):
+    """Search available products via REST API"""
+    context.resp = requests.get(f"{context.base_url}/products", params={"available": "true"})
+    assert context.resp.status_code == HTTP_200_OK
 
-@when('I set the "{element_name}" to "{text_string}"')
-def step_impl(context, element_name, text_string):
-    element_id = ID_PREFIX + element_name.lower().replace(' ', '_')
-    element = context.driver.find_element(By.ID, element_id)
-    element.clear()
-    element.send_keys(text_string)
+@when('I search for products named "{name}"')
+def step_impl(context, name):
+    """Search products by name via REST API"""
+    context.resp = requests.get(f"{context.base_url}/products", params={"name": name})
+    assert context.resp.status_code == HTTP_200_OK
 
-@when('I select "{text}" in the "{element_name}" dropdown')
-def step_impl(context, text, element_name):
-    element_id = ID_PREFIX + element_name.lower().replace(' ', '_')
-    element = Select(context.driver.find_element(By.ID, element_id))
-    element.select_by_visible_text(text)
+@then('I should see the product "{name}" in the results')
+def step_impl(context, name):
+    """Check if product is in results"""
+    products = context.resp.json()
+    product_names = [p["name"] for p in products]
+    assert name in product_names, f"Product {name} not found in {product_names}"
 
-@then('I should see "{text}" in the "{element_name}" dropdown')
-def step_impl(context, text, element_name):
-    element_id = ID_PREFIX + element_name.lower().replace(' ', '_')
-    element = Select(context.driver.find_element(By.ID, element_id))
-    assert(element.first_selected_option.text == text)
+@then('I should get product "{name}"')
+def step_impl(context, name):
+    """Check if we got the expected product"""
+    product = context.resp.json()
+    assert product["name"] == name, f"Expected {name}, got {product['name']}"
 
-@then('the "{element_name}" field should be empty')
-def step_impl(context, element_name):
-    element_id = ID_PREFIX + element_name.lower().replace(' ', '_')
-    element = context.driver.find_element(By.ID, element_id)
-    assert(element.get_attribute('value') == u'')
+@then('I should see product "{product_id}" with name "{name}"')
+def step_impl(context, product_id, name):
+    """Check if product was updated"""
+    product = context.resp.json()
+    assert product["name"] == name, f"Expected {name}, got {product['name']}"
 
-##################################################################
-# These two function simulate copy and paste
-##################################################################
-@when('I copy the "{element_name}" field')
-def step_impl(context, element_name):
-    element_id = ID_PREFIX + element_name.lower().replace(' ', '_')
-    element = WebDriverWait(context.driver, context.wait_seconds).until(
-        expected_conditions.presence_of_element_located((By.ID, element_id))
-    )
-    context.clipboard = element.get_attribute('value')
-    logging.info('Clipboard contains: %s', context.clipboard)
+@then('I should not see product "{name}" in the results')
+def step_impl(context, name):
+    """Check if product is not in results"""
+    products = context.resp.json()
+    product_names = [p["name"] for p in products]
+    assert name not in product_names, f"Product {name} should not be in {product_names}"
 
-@when('I paste the "{element_name}" field')
-def step_impl(context, element_name):
-    element_id = ID_PREFIX + element_name.lower().replace(' ', '_')
-    element = WebDriverWait(context.driver, context.wait_seconds).until(
-        expected_conditions.presence_of_element_located((By.ID, element_id))
-    )
-    element.clear()
-    element.send_keys(context.clipboard)
-
-##################################################################
-# This code works because of the following naming convention:
-# The buttons have an id in the html hat is the button text
-# in lowercase followed by '-btn' so the Clean button has an id of
-# id='clear-btn'. That allows us to lowercase the name and add '-btn'
-# to get the element id of any button
-##################################################################
-
-## UPDATE CODE HERE ##
-
-##################################################################
-# This code works because of the following naming convention:
-# The id field for text input in the html is the element name
-# prefixed by ID_PREFIX so the Name field has an id='pet_name'
-# We can then lowercase the name and prefix with pet_ to get the id
-##################################################################
-
-@then('I should see "{text_string}" in the "{element_name}" field')
-def step_impl(context, text_string, element_name):
-    element_id = ID_PREFIX + element_name.lower().replace(' ', '_')
-    found = WebDriverWait(context.driver, context.wait_seconds).until(
-        expected_conditions.text_to_be_present_in_element_value(
-            (By.ID, element_id),
-            text_string
-        )
-    )
-    assert(found)
-
-@when('I change "{element_name}" to "{text_string}"')
-def step_impl(context, element_name, text_string):
-    element_id = ID_PREFIX + element_name.lower().replace(' ', '_')
-    element = WebDriverWait(context.driver, context.wait_seconds).until(
-        expected_conditions.presence_of_element_located((By.ID, element_id))
-    )
-    element.clear()
-    element.send_keys(text_string)
+@then('I should see {count:d} products')
+def step_impl(context, count):
+    """Check the number of products"""
+    products = context.resp.json()
+    assert len(products) == count, f"Expected {count} products, got {len(products)}"
+'@ | Set-Content -FilePath features/steps/web_steps.py -Encoding utf8
