@@ -1,53 +1,133 @@
-#features/products.feature
-$featureContent = @'
-Feature: Product Management
-  As a Store Manager
-  I want to manage products
-  So that I can keep track of my inventory
+Feature: Product Administration UI
+  As a Product Administrator
+  I need a web-based Product management UI
+  So that I can keep the product catalog up to date
 
   Background:
     Given the following products
-      | name          | description        | price | category    | available |
-      | Laptop        | High-end laptop   | 999.99| Electronics | true      |
-      | Mouse         | Wireless mouse    | 29.99 | Electronics | true      |
-      | T-Shirt       | Cotton t-shirt    | 19.99 | Clothing    | true      |
-      | Python Book   | Programming book  | 49.99 | Books       | false     |
+      | name   | description       | price | available | category |
+      | Hat    | A red fedora      | 59.95 | True      | Cloths   |
+      | Shoes  | Running sneakers  | 99.00 | False     | Cloths   |
+      | Big Mac| Hamburger         | 4.99  | True      | Food     |
+      | Sheets | Cotton bedsheets  | 39.95 | True      | Housewares |
 
-  Scenario: Create a product
-    When I create a new product with name "Headphones", description "Noise cancelling", price "199.99", category "Electronics", available "true"
-    Then I should see the product "Headphones" in the results
+  ##################################################################
+  # Scenario 1: Read a Product
+  ##################################################################
+  Scenario: Read a Product
+    When I visit the "Home Page"
+    And I set the "Name" to "Hat"
+    And I press the "Search" button
+    Then I should see the message "Success"
 
-  Scenario: Read a product
-    When I request product with id "1"
-    Then I should get product "Laptop"
+    When I copy the "Id" field
+    And I press the "Clear" button
+    And I paste the "Id" field
+    And I press the "Retrieve" button
 
-  Scenario: Update a product
-    When I update product "1" with name "Gaming Laptop", description "High performance"
-    Then I should see product "1" with name "Gaming Laptop"
+    Then I should see the message "Success"
+    And I should see "Hat" in the "Name" field
+    And I should see "A red fedora" in the "Description" field
+    And I should see "True" in the "Available" dropdown
+    And I should see "Cloths" in the "Category" dropdown
+    And I should see "59.95" in the "Price" field
 
-  Scenario: Delete a product
-    When I delete product "2"
-    Then I should not see product "Mouse" in the results
+  ##################################################################
+  # Scenario 2: Update a Product
+  ##################################################################
+  Scenario: Update a Product
+    When I visit the "Home Page"
+    And I set the "Name" to "Hat"
+    And I press the "Search" button
+    Then I should see the message "Success"
+    And I should see "A red fedora" in the "Description" field
 
+    When I change "Name" to "Fedora"
+    And I press the "Update" button
+    Then I should see the message "Success"
+
+    When I copy the "Id" field
+    And I press the "Clear" button
+    And I paste the "Id" field
+    And I press the "Retrieve" button
+    Then I should see the message "Success"
+    And I should see "Fedora" in the "Name" field
+
+    When I press the "Clear" button
+    And I press the "Search" button
+    Then I should see the message "Success"
+    And I should see "Fedora" in the results
+    And I should not see "Hat" in the results
+
+  ##################################################################
+  # Scenario 3: Delete a Product
+  ##################################################################
+  Scenario: Delete a Product
+    When I visit the "Home Page"
+    And I set the "Name" to "Hat"
+    And I press the "Search" button
+    Then I should see the message "Success"
+    And I should see "A red fedora" in the "Description" field
+
+    When I copy the "Id" field
+    And I press the "Clear" button
+    And I paste the "Id" field
+    And I press the "Delete" button
+    Then I should see the message "Product has been Deleted!"
+
+    When I press the "Clear" button
+    And I press the "Search" button
+    Then I should see the message "Success"
+    And I should not see "Hat" in the results
+
+  ##################################################################
+  # Scenario 4: List all products
+  ##################################################################
   Scenario: List all products
-    When I list all products
-    Then I should see 4 products
+    When I visit the "Home Page"
+    And I press the "Clear" button
+    And I press the "Search" button
+    Then I should see the message "Success"
+    And I should see "Hat" in the results
+    And I should see "Shoes" in the results
+    And I should see "Big Mac" in the results
+    And I should see "Sheets" in the results
 
-  Scenario: List products by category
-    When I search for products in category "Electronics"
-    Then I should see 2 products
-    And I should see "Laptop" in the results
-    And I should see "Mouse" in the results
+  ##################################################################
+  # Scenario 5: Search by category
+  ##################################################################
+  Scenario: Search by category
+    When I visit the "Home Page"
+    And I press the "Clear" button
+    And I select "Food" in the "Category" dropdown
+    And I press the "Search" button
+    Then I should see the message "Success"
+    And I should see "Big Mac" in the results
+    And I should not see "Hat" in the results
+    And I should not see "Shoes" in the results
+    And I should not see "Sheets" in the results
 
-  Scenario: List products by availability
-    When I search for available products
-    Then I should see 3 products
-    And I should not see "Python Book" in the results
+  ##################################################################
+  # Scenario 6: Search by available
+  ##################################################################
+  Scenario: Search by available
+    When I visit the "Home Page"
+    And I press the "Clear" button
+    And I select "True" in the "Available" dropdown
+    And I press the "Search" button
+    Then I should see the message "Success"
+    And I should see "Hat" in the results
+    And I should see "Big Mac" in the results
+    And I should see "Sheets" in the results
+    And I should not see "Shoes" in the results
 
-  Scenario: List products by name
-    When I search for products named "Laptop"
-    Then I should see 1 product
-    And I should see "Laptop" in the results
-'@
-
-$featureContent | Out-File -FilePath features/products.feature -Encoding utf8 -NoNewline
+  ##################################################################
+  # Scenario 7: Search by name
+  ##################################################################
+  Scenario: Search by name
+    When I visit the "Home Page"
+    And I set the "Name" to "Hat"
+    And I press the "Search" button
+    Then I should see the message "Success"
+    And I should see "Hat" in the "Name" field
+    And I should see "A red fedora" in the "Description" field

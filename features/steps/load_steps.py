@@ -1,27 +1,22 @@
-# محو المحتوى القديم وإنشاء ملف Python نظيف
-$pythonCode = @'
-"""
-Load Steps for Behave
-"""
+import requests
 from behave import given
-from service.models import Product
+from service.common.status import HTTP_201_CREATED
 
 @given('the following products')
 def step_impl(context):
-    """Delete all products and load new ones"""
-    # First, delete all existing products to start fresh
-    Product.query.delete()
-    
-    # Create products from the feature table
-    for row in context.table:
-        product = Product()
-        product.name = row['name']
-        product.description = row['description']
-        product.price = float(row['price'])
-        product.category = row['category']
-        product.available = row['available'].lower() in ['true', 'yes', '1']
-        product.create()
-'@
+    rest_endpoint = context.base_url + "/products"
 
-# حفظ الملف بشكل صحيح
-$pythonCode | Out-File -FilePath features/steps/load_steps.py -Encoding utf8 -NoNewline
+    # delete all existing products
+    requests.delete(rest_endpoint)
+
+    # load new products
+    for row in context.table:
+        payload = {
+            "name": row["name"],
+            "description": row["description"],
+            "price": float(row["price"]),
+            "available": row["available"] in ["True", "true", "1"],
+            "category": row["category"]
+        }
+        context.resp = requests.post(rest_endpoint, json=payload)
+        assert context.resp.status_code == HTTP_201_CREATED
